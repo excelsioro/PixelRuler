@@ -172,17 +172,19 @@
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
       function drawPoint(point, color) { ctx.beginPath(); ctx.arc(point.x, point.y, DOT_RADIUS, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill(); ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)'; ctx.lineWidth = 2; ctx.stroke(); }
-      function drawLine(p1, p2, color, label) {
-        ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.strokeStyle = color; ctx.lineWidth = LINE_WIDTH; ctx.stroke();
-        const midX = (p1.x + p2.x) / 2, midY = (p1.y + p2.y) / 2;
-        ctx.font = "bold 16px 'DM Sans', sans-serif"; const labelWidth = ctx.measureText(label).width + 12;
-        ctx.fillStyle = 'rgba(15, 18, 25, 0.85)'; ctx.beginPath(); ctx.roundRect(midX - labelWidth / 2, midY - 12, labelWidth, 24, 4); ctx.fill();
-        ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, midX, midY);
+      function drawLine(p1, p2, color) {
+        ctx.beginPath();
+        ctx.moveTo(p1.x, p1.y);
+        ctx.lineTo(p2.x, p2.y);
+        ctx.strokeStyle = color;
+        ctx.lineWidth = LINE_WIDTH;
+        ctx.stroke();
       }
+
       if (points.length >= 1) { drawPoint(points[0], LINE_A_COLOR); }
-      if (points.length >= 2) { drawPoint(points[1], LINE_A_COLOR); drawLine(points[0], points[1], LINE_A_COLOR, 'A'); }
+      if (points.length >= 2) { drawPoint(points[1], LINE_A_COLOR); drawLine(points[0], points[1], LINE_A_COLOR); }
       if (points.length >= 3) { drawPoint(points[2], LINE_B_COLOR); }
-      if (points.length >= 4) { drawPoint(points[3], LINE_B_COLOR); drawLine(points[2], points[3], LINE_B_COLOR, 'B'); }
+      if (points.length >= 4) { drawPoint(points[3], LINE_B_COLOR); drawLine(points[2], points[3], LINE_B_COLOR); }
     }
     function resizeCanvas() {
       if (!image) return;
