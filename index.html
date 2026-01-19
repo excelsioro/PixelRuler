@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Proportion Measure - Artist Reference Tool</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --background: hsl(220, 20%, 7%);
+      --foreground: hsl(220, 10%, 92%);
+      --card: hsl(220, 20%, 10%);
+      --secondary: hsl(220, 15%, 15%);
+      --muted: hsl(220, 15%, 18%);
+      --muted-foreground: hsl(220, 10%, 55%);
+      --border: hsl(220, 15%, 18%);
+      --accent: hsl(188, 90%, 45%);
+      --line-a: hsl(12, 85%, 60%);
+      --line-b: hsl(188, 90%, 50%);
+      --radius: 0.75rem;
+    }
+    body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif; background: var(--background); color: var(--foreground); min-height: 100vh; display: flex; flex-direction: column; }
+    header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); }
+    .logo { display: flex; align-items: center; gap: 0.75rem; }
+    .logo-icon { width: 36px; height: 36px; background: hsla(188, 90%, 45%, 0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .logo-icon svg { width: 20px; height: 20px; color: var(--accent); }
+    .logo-text h1 { font-size: 1.125rem; font-weight: 600; line-height: 1.2; }
+    .logo-text p { font-size: 0.75rem; color: var(--muted-foreground); }
+    .btn { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.5rem 1rem; font-size: 0.875rem; font-weight: 500; font-family: inherit; background: var(--secondary); color: var(--foreground); border: none; border-radius: var(--radius); cursor: pointer; transition: background 0.15s ease; }
+    .btn:hover { background: hsl(220, 15%, 20%); }
+    .btn svg { width: 16px; height: 16px; }
+    .hidden { display: none !important; }
+    main { flex: 1; display: flex; flex-direction: column; }
+    @media (min-width: 1024px) { main { flex-direction: row; } }
+    .canvas-area { flex: 1; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
+    .upload-zone { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1.5rem; width: 100%; max-width: 32rem; aspect-ratio: 4/3; border: 2px dashed var(--border); border-radius: 1rem; background: hsla(220, 20%, 10%, 0.3); transition: all 0.2s ease; cursor: pointer; }
+    .upload-zone:hover { border-color: var(--muted-foreground); }
+    .upload-zone.dragging { border-color: var(--accent); background: hsla(188, 90%, 45%, 0.1); transform: scale(1.02); }
+    .upload-zone input { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+    .upload-icon { width: 64px; height: 64px; background: var(--secondary); border-radius: 1rem; display: flex; align-items: center; justify-content: center; transition: background 0.2s ease; }
+    .upload-zone.dragging .upload-icon { background: hsla(188, 90%, 45%, 0.2); }
+    .upload-icon svg { width: 32px; height: 32px; color: var(--muted-foreground); }
+    .upload-zone.dragging .upload-icon svg { color: var(--accent); }
+    .upload-text { text-align: center; padding: 0 1.5rem; }
+    .upload-text h3 { font-size: 1.125rem; font-weight: 500; margin-bottom: 0.5rem; }
+    .upload-text p { font-size: 0.875rem; color: var(--muted-foreground); }
+    .upload-formats { display: flex; align-items: center; gap: 0.5rem; font-size: 0.75rem; color: hsla(220, 10%, 55%, 0.6); }
+    .canvas-container { display: flex; flex-direction: column; align-items: center; gap: 1rem; width: 100%; height: 100%; }
+    .canvas-wrapper { flex: 1; width: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+    #canvas { max-width: 100%; max-height: 100%; border-radius: var(--radius); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); cursor: crosshair; }
+    .canvas-controls { display: flex; align-items: center; gap: 1rem; }
+    .instruction { font-size: 0.875rem; font-family: 'JetBrains Mono', monospace; color: var(--muted-foreground); }
+    aside { width: 100%; padding: 1.5rem; border-top: 1px solid var(--border); background: hsla(220, 20%, 10%, 0.2); }
+    @media (min-width: 1024px) { aside { width: 288px; border-top: none; border-left: 1px solid var(--border); } }
+    .results-panel { padding: 1.25rem; background: hsla(220, 20%, 10%, 0.5); backdrop-filter: blur(8px); border-radius: var(--radius); border: 1px solid hsla(220, 15%, 18%, 0.5); }
+    .results-title { font-size: 0.75rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted-foreground); margin-bottom: 0.75rem; }
+    .results-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .result-item { display: flex; flex-direction: column; gap: 0.25rem; }
+    .result-label { display: flex; align-items: center; gap: 0.5rem; }
+    .result-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .result-dot.a { background: var(--line-a); }
+    .result-dot.b { background: var(--line-b); }
+    .result-label span { font-size: 0.75rem; font-weight: 500; color: var(--muted-foreground); }
+    .result-value { font-size: 1.25rem; font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+    .ratio-section { padding-top: 0.75rem; margin-top: 0.75rem; border-top: 1px solid hsla(220, 15%, 18%, 0.5); display: flex; align-items: baseline; justify-content: space-between; }
+    .ratio-label { font-size: 0.75rem; font-weight: 500; color: var(--muted-foreground); }
+    .ratio-value { font-size: 1.5rem; font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--accent); }
+    .instructions-panel { margin-top: 1.5rem; padding: 1rem; background: hsla(220, 15%, 15%, 0.3); border-radius: var(--radius); border: 1px solid hsla(220, 15%, 18%, 0.3); }
+    .instructions-panel h4 { font-size: 0.75rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted-foreground); margin-bottom: 0.75rem; }
+    .instructions-list { list-style: none; display: flex; flex-direction: column; gap: 0.5rem; }
+    .instructions-list li { display: flex; gap: 0.5rem; font-size: 0.875rem; color: var(--muted-foreground); }
+    .step-number { flex-shrink: 0; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 500; }
+    .step-number.a { background: hsla(12, 85%, 60%, 0.2); color: var(--line-a); }
+    .step-number.b { background: hsla(188, 90%, 50%, 0.2); color: var(--line-b); }
+    .step-number.ratio { background: hsla(188, 90%, 45%, 0.2); color: var(--accent); }
+    .tip-panel { margin-top: 1rem; padding: 1rem; border-radius: var(--radius); border: 1px solid hsla(220, 15%, 18%, 0.3); }
+    .tip-panel h4 { font-size: 0.75rem; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted-foreground); margin-bottom: 0.5rem; }
+    .tip-panel p { font-size: 0.875rem; color: var(--muted-foreground); line-height: 1.5; }
+    footer { padding: 0.75rem 1.5rem; border-top: 1px solid hsla(220, 15%, 18%, 0.3); text-align: center; }
+    footer p { font-size: 0.75rem; color: hsla(220, 10%, 55%, 0.6); }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="logo">
+      <div class="logo-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21.3 15.3a2.4 2.4 0 0 1 0 3.4l-2.6 2.6a2.4 2.4 0 0 1-3.4 0L2.7 8.7a2.41 2.41 0 0 1 0-3.4l2.6-2.6a2.41 2.41 0 0 1 3.4 0Z"/>
+          <path d="m14.5 12.5 2-2"/><path d="m11.5 9.5 2-2"/><path d="m8.5 6.5 2-2"/><path d="m17.5 15.5 2-2"/>
+        </svg>
+      </div>
+      <div class="logo-text"><h1>Proportion Measure</h1><p>Measure ratios in reference images</p></div>
+    </div>
+    <button id="newImageBtn" class="btn hidden">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/>
+      </svg>
+      <span>New Image</span>
+    </button>
+  </header>
+  <main>
+    <div class="canvas-area">
+      <div id="uploadZone" class="upload-zone">
+        <input type="file" id="fileInput" accept="image/*">
+        <div class="upload-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+          </svg>
+        </div>
+        <div class="upload-text"><h3>Upload a reference image</h3><p>Drag and drop or click to browse</p></div>
+        <div class="upload-formats"><span>PNG, JPG, WEBP</span><span>•</span><span>Any size</span></div>
+      </div>
+      <div id="canvasContainer" class="canvas-container hidden">
+        <div class="canvas-wrapper"><canvas id="canvas"></canvas></div>
+        <div class="canvas-controls">
+          <p id="instruction" class="instruction">Click to place first point of Distance A</p>
+          <button id="resetBtn" class="btn hidden">Reset</button>
+        </div>
+      </div>
+    </div>
+    <aside id="sidebar" class="hidden">
+      <div class="results-panel">
+        <h3 class="results-title">Measurements</h3>
+        <div class="results-grid">
+          <div class="result-item"><div class="result-label"><div class="result-dot a"></div><span>Distance A</span></div><div id="distanceA" class="result-value">—</div></div>
+          <div class="result-item"><div class="result-label"><div class="result-dot b"></div><span>Distance B</span></div><div id="distanceB" class="result-value">—</div></div>
+        </div>
+        <div class="ratio-section"><span class="ratio-label">Ratio (B ÷ A)</span><span id="ratio" class="ratio-value">—</span></div>
+      </div>
+      <div class="instructions-panel">
+        <h4>How to use</h4>
+        <ol class="instructions-list">
+          <li><span class="step-number a">1</span><span>Click two points to define Distance A</span></li>
+          <li><span class="step-number b">2</span><span>Click two more points for Distance B</span></li>
+          <li><span class="step-number ratio">3</span><span>View the ratio (B ÷ A)</span></li>
+        </ol>
+      </div>
+      <div class="tip-panel"><h4>Tip</h4><p>Measurements are in original image pixels, so scaling doesn't affect accuracy.</p></div>
+    </aside>
+  </main>
+  <footer><p>Click precisely on your reference image to measure proportions</p></footer>
+  <script>
+    const uploadZone = document.getElementById('uploadZone');
+    const fileInput = document.getElementById('fileInput');
+    const canvasContainer = document.getElementById('canvasContainer');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const sidebar = document.getElementById('sidebar');
+    const newImageBtn = document.getElementById('newImageBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const instructionEl = document.getElementById('instruction');
+    const distanceAEl = document.getElementById('distanceA');
+    const distanceBEl = document.getElementById('distanceB');
+    const ratioEl = document.getElementById('ratio');
+    let image = null, points = [], scale = 1;
+    const LINE_A_COLOR = '#E85D4C', LINE_B_COLOR = '#18B8D0', DOT_RADIUS = 6, LINE_WIDTH = 2;
+    const instructions = ['Click to place first point of Distance A','Click to place second point of Distance A','Click to place first point of Distance B','Click to place second point of Distance B','Measurement complete'];
+    function calculateDistance(p1, p2) { const dx = (p2.x - p1.x) / scale, dy = (p2.y - p1.y) / scale; return Math.sqrt(dx * dx + dy * dy); }
+    function updateMeasurements() {
+      let distA = null, distB = null;
+      if (points.length >= 2) { distA = calculateDistance(points[0], points[1]); distanceAEl.textContent = Math.round(distA) + ' px'; } else { distanceAEl.textContent = '—'; }
+      if (points.length >= 4) { distB = calculateDistance(points[2], points[3]); distanceBEl.textContent = Math.round(distB) + ' px'; } else { distanceBEl.textContent = '—'; }
+      if (distA && distB) { ratioEl.textContent = (distB / distA).toFixed(2); } else { ratioEl.textContent = '—'; }
+      instructionEl.textContent = instructions[Math.min(points.length, 4)];
+      if (points.length > 0) { resetBtn.classList.remove('hidden'); } else { resetBtn.classList.add('hidden'); }
+    }
+    function draw() {
+      if (!image) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      function drawPoint(point, color) { ctx.beginPath(); ctx.arc(point.x, point.y, DOT_RADIUS, 0, Math.PI * 2); ctx.fillStyle = color; ctx.fill(); ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)'; ctx.lineWidth = 2; ctx.stroke(); }
+      function drawLine(p1, p2, color, label) {
+        ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.strokeStyle = color; ctx.lineWidth = LINE_WIDTH; ctx.stroke();
+        const midX = (p1.x + p2.x) / 2, midY = (p1.y + p2.y) / 2;
+        ctx.font = "bold 16px 'DM Sans', sans-serif"; const labelWidth = ctx.measureText(label).width + 12;
+        ctx.fillStyle = 'rgba(15, 18, 25, 0.85)'; ctx.beginPath(); ctx.roundRect(midX - labelWidth / 2, midY - 12, labelWidth, 24, 4); ctx.fill();
+        ctx.fillStyle = color; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, midX, midY);
+      }
+      if (points.length >= 1) { drawPoint(points[0], LINE_A_COLOR); }
+      if (points.length >= 2) { drawPoint(points[1], LINE_A_COLOR); drawLine(points[0], points[1], LINE_A_COLOR, 'A'); }
+      if (points.length >= 3) { drawPoint(points[2], LINE_B_COLOR); }
+      if (points.length >= 4) { drawPoint(points[3], LINE_B_COLOR); drawLine(points[2], points[3], LINE_B_COLOR, 'B'); }
+    }
+    function resizeCanvas() {
+      if (!image) return;
+      const wrapper = canvasContainer.querySelector('.canvas-wrapper');
+      const containerWidth = wrapper.clientWidth, containerHeight = wrapper.clientHeight;
+      const imageAspect = image.width / image.height, containerAspect = containerWidth / containerHeight;
+      let newWidth, newHeight;
+      if (imageAspect > containerAspect) { newWidth = containerWidth; newHeight = containerWidth / imageAspect; }
+      else { newHeight = containerHeight; newWidth = containerHeight * imageAspect; }
+      scale = newWidth / image.width; canvas.width = newWidth; canvas.height = newHeight; draw();
+    }
+    function loadImage(file) {
+      if (!file.type.startsWith('image/')) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => { image = img; points = []; uploadZone.classList.add('hidden'); canvasContainer.classList.remove('hidden'); sidebar.classList.remove('hidden'); newImageBtn.classList.remove('hidden'); resizeCanvas(); updateMeasurements(); };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+    fileInput.addEventListener('change', (e) => { const file = e.target.files[0]; if (file) loadImage(file); });
+    uploadZone.addEventListener('dragover', (e) => { e.preventDefault(); uploadZone.classList.add('dragging'); });
+    uploadZone.addEventListener('dragleave', (e) => { e.preventDefault(); uploadZone.classList.remove('dragging'); });
+    uploadZone.addEventListener('drop', (e) => { e.preventDefault(); uploadZone.classList.remove('dragging'); const file = e.dataTransfer.files[0]; if (file) loadImage(file); });
+    canvas.addEventListener('click', (e) => { if (points.length >= 4) return; const rect = canvas.getBoundingClientRect(); const x = e.clientX - rect.left, y = e.clientY - rect.top; points.push({ x, y }); draw(); updateMeasurements(); });
+    resetBtn.addEventListener('click', () => { points = []; draw(); updateMeasurements(); });
+    newImageBtn.addEventListener('click', () => { image = null; points = []; uploadZone.classList.remove('hidden'); canvasContainer.classList.add('hidden'); sidebar.classList.add('hidden'); newImageBtn.classList.add('hidden'); fileInput.value = ''; });
+    window.addEventListener('resize', resizeCanvas);
+  </script>
+</body>
+</html>
